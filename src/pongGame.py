@@ -19,6 +19,9 @@ opponent = pygame.Rect(10, HEIGHT/2 - 70, 10, 149)
 backgroundColor = (100, 100, 125)
 ballColor = (200,200,200)
 lineColor = (255, 255, 255)
+textColor = (50, 50, 50)
+
+gameFont = pygame.font.Font(None, 32)
 
 running = True
 while running:
@@ -30,11 +33,12 @@ while running:
     pygame.draw.rect(screen, ballColor, opponent)
     pygame.draw.aaline(screen, lineColor, (WIDTH/2, 0), (WIDTH/2, HEIGHT))
 
-    # Movement in game
+    # Gameplay
     keys = pygame.key.get_pressed()  # gets input from keybaord
     ballMovement(ball, player, opponent, WIDTH, HEIGHT)
     playerMovement(player, keys, HEIGHT)
     opponentAI(opponent, ball, HEIGHT)
+    updateScoreBoard(screen, gameFont, textColor)
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:  # checks if game window has been closed, if it has been stop running
