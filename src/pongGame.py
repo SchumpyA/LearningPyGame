@@ -1,6 +1,6 @@
 import pygame
 import sys
-from pongFunctions import *
+import pongFunctions as pf
 
 pygame.init()
 
@@ -11,10 +11,12 @@ pygame.display.set_caption('Pong')
 clock = pygame.time.Clock()  # sets the timing
 
 # Game State work
-gameState = "menu"   # menu -> start -> playing, score_pause
+gameState = "menu_mode"   # menu_mode -> menu_score -> start -> playing, score_pause
 timerStart = pygame.time.get_ticks()
 countdownTime = 3000  # 3 seconds for starting wait
 gameMode = None
+maxScore = 0
+winner = None
 
 # Game Components
 ball = pygame.Rect(WIDTH/2 - 15, HEIGHT/2 -15, 30, 30)
@@ -25,65 +27,141 @@ gameFont = pygame.font.Font(None, 32)
 
 running = True
 while running:
-    clock.tick(60)  #60 fps
+    clock.tick(60)
 
-    if(gameState == "menu"):
-        startGame(gameState, screen, gameFont, WIDTH, HEIGHT)
-        waiting = True  
-        while waiting:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:  # checks if game window has been closed, if it has been stop running
-                    pygame.quit()  # closes the game
-                    sys.exit()     # closes the program
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_1:
-                        gameMode = "AI"
-                        gameState = "start"
-                        waiting = False
-                    if event.key == pygame.K_2:
-                        gameMode = "PVP"
-                        gameState = "start"
-                        waiting = False
-
-    screen.fill(backgroundColor)    # Set up screen with components and clean line to seperate the midpoint
-    pygame.draw.ellipse(screen, ballColor, ball)
-    pygame.draw.rect(screen, ballColor, player)
-    pygame.draw.rect(screen, ballColor, opponent)
-    pygame.draw.aaline(screen, lineColor, (WIDTH/2, 0), (WIDTH/2, HEIGHT))
-
-    # Gameplay
-    keys = pygame.key.get_pressed()  # gets input from keybaord
-    if gameState == "playing":
-        scored = ballMovement(ball, player, opponent, WIDTH, HEIGHT) # moves ball unless ball is scored
-        if scored:
-            gameState = "score_pause"
-            timerStart = pygame.time.get_ticks()
-            countdownTime = 500  # 1 second pause after score
-    playerMovement(player, keys, HEIGHT)
-    if gameMode == "AI":
-        opponentAI(opponent, ball, HEIGHT)
-    elif gameMode == "PVP":
-        opponentMovement(opponent, keys, HEIGHT)
-    updateScoreBoard(screen, gameFont, textColor)
-
-    currentTime = pygame.time.get_ticks()
-
-    if gameState in ["start", "score_pause"]:
-        elapsed = currentTime - timerStart
-        if elapsed >= countdownTime:
-            gameState = "playing"
-        elif elapsed < countdownTime and gameState == "start":
-            secondsLeft = (countdownTime - elapsed) // 1000 + 1
-            countdownText = gameFont.render(str(secondsLeft), False, textColor)
-            screen.blit(countdownText, (WIDTH//2 - 6, HEIGHT//2 - 10))
-
+    # ===================== EVENTS =====================
     for event in pygame.event.get():
-        if event.type == pygame.QUIT:  # checks if game window has been closed, if it has been stop running
+        if event.type == pygame.QUIT:
             running = False
+
         if event.type == pygame.KEYDOWN:
+
+            # ---- MENU: MODE SELECTION ----
+            if gameState == "menu_mode":
+                if event.key == pygame.K_1:
+                    gameMode = "AI"
+                    gameState = "menu_score"
+                elif event.key == pygame.K_2:
+                    gameMode = "PVP"
+                    gameState = "menu_score"
+
+            # ---- MENU: SCORE SELECTION ----
+            elif gameState == "menu_score":
+                if event.key == pygame.K_1:
+                    maxScore = 1
+                elif event.key == pygame.K_2:
+                    maxScore = 10
+                elif event.key == pygame.K_3:
+                    maxScore = 25
+
+                if event.key in [pygame.K_1, pygame.K_2, pygame.K_3]:
+                    pf.resetScores()
+                    ball.center = (WIDTH//2, HEIGHT//2)
+
+                    gameState = "start"
+                    timerStart = pygame.time.get_ticks()
+                    countdownTime = 3000
+
+            # ---- GAME OVER: RESTART ----
+            elif gameState == "game_over":
+                if event.key == pygame.K_r:
+                    gameState = "menu_mode"
+
+            # ---- GLOBAL ----
             if event.key == pygame.K_ESCAPE:
-                gameState = "menu"
-    
+                gameState = "menu_mode"
+
+    # ===================== DRAW / LOGIC =====================
+
+    screen.fill(pf.backgroundColor)
+
+    # ---- MENU: MODE ----
+    if gameState == "menu_mode":
+        title = gameFont.render("PONG", False, pf.textColor)
+        option1 = gameFont.render("1: Play vs AI", False, pf.textColor)
+        option2 = gameFont.render("2: 2 Player Mode", False, pf.textColor)
+
+        screen.blit(title, (WIDTH//2 - 40, HEIGHT//3))
+        screen.blit(option1, (WIDTH//2 - 120, HEIGHT//2))
+        screen.blit(option2, (WIDTH//2 - 140, HEIGHT//2 + 40))
+
+    # ---- MENU: SCORE ----
+    elif gameState == "menu_score":
+        title = gameFont.render("Choose Win Condition", False, pf.textColor)
+        option1 = gameFont.render("1: First to 1", False, pf.textColor)
+        option2 = gameFont.render("2: First to 10", False, pf.textColor)
+        option3 = gameFont.render("3: First to 25", False, pf.textColor)
+
+        screen.blit(title, (WIDTH//2 - 120, HEIGHT//3))
+        screen.blit(option1, (WIDTH//2 - 120, HEIGHT//2))
+        screen.blit(option2, (WIDTH//2 - 120, HEIGHT//2 + 40))
+        screen.blit(option3, (WIDTH//2 - 120, HEIGHT//2 + 80))
+
+    # ---- GAME OVER ----
+    elif gameState == "game_over":
+        if gameMode == "AI":
+            text = "You Win" if winner == "player" else "You Lose"
+        else:
+            text = "Player 1 Wins" if winner == "player" else "Player 2 Wins"
+
+        winText = gameFont.render(text, False, pf.textColor)
+        restartText = gameFont.render("Press R to Restart", False, pf.textColor)
+
+        screen.blit(winText, (WIDTH//2 - 100, HEIGHT//2))
+        screen.blit(restartText, (WIDTH//2 - 140, HEIGHT//2 + 40))
+        pygame.display.flip()
+        continue
+
+    # ---- GAMEPLAY STATES ----
+    else:
+        # Draw game objects
+        pygame.draw.ellipse(screen, pf.ballColor, ball)
+        pygame.draw.rect(screen, pf.ballColor, player)
+        pygame.draw.rect(screen, pf.ballColor, opponent)
+        pygame.draw.aaline(screen, pf.lineColor, (WIDTH//2, 0), (WIDTH//2, HEIGHT))
+
+        keys = pygame.key.get_pressed()
+
+        # ---- PLAYING ----
+        if gameState == "playing":
+            scored = pf.ballMovement(ball, player, opponent, WIDTH, HEIGHT)
+
+            if scored:
+                if pf.playerScore >= maxScore:
+                    winner = "player"
+                    gameState = "game_over"
+                    continue
+                elif pf.opponentScore >= maxScore:
+                    winner = "opponent"
+                    gameState = "game_over"
+                    continue
+                else:
+                    gameState = "score_pause"
+                    timerStart = pygame.time.get_ticks()
+                    countdownTime = 500
+
+        # ---- PLAYER MOVEMENT ----
+        pf.playerMovement(player, keys, HEIGHT)
+
+        if gameMode == "AI":
+            pf.opponentAI(opponent, ball, HEIGHT)
+        else:
+            pf.opponentMovement(opponent, keys, HEIGHT)
+
+        # ---- SCOREBOARD ----
+        pf.updateScoreBoard(screen, gameFont, pf.textColor)
+
+        # ---- TIMERS (start + pause) ----
+        if gameState in ["start", "score_pause"]:
+            elapsed = pygame.time.get_ticks() - timerStart
+
+            if elapsed >= countdownTime:
+                gameState = "playing"
+            elif gameState == "start":
+                secondsLeft = (countdownTime - elapsed) // 1000 + 1
+                countdownText = gameFont.render(str(secondsLeft), False, pf.textColor)
+                screen.blit(countdownText, (WIDTH//2 - 6, HEIGHT//2 - 10))
+
     pygame.display.flip()
 
 pygame.quit()  # closes the game

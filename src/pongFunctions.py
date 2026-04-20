@@ -14,7 +14,7 @@ playerSpeed = 7
 opponentSpeed = 7
 
 # Text Variables
-playerScore = 0  # TO FUTURE SELF, MAKE MAX SCORE 100
+playerScore = 0
 opponentScore = 0
 
 # Movement Functions
@@ -94,3 +94,23 @@ def startGame(gameState, screen, gameFont, screenWidth, screenHeight):
     screen.blit(option1, (screenWidth//2 - 120, screenHeight//2))
     screen.blit(option2, (screenWidth//2 - 140, screenHeight//2 + 40))
     pygame.display.flip()
+
+def scoreScreen(gameState, screen, gameFont, screenWidth, screenHeight):
+    screen.fill(backgroundColor)
+
+    title = gameFont.render("Choose Win Condition", False, textColor)
+    option1 = gameFont.render("Press 1: First to 1", False, textColor)
+    option2 = gameFont.render("Press 2: First to 10", False, textColor)
+    option3 = gameFont.render("Press 3: First to 25", False, textColor)
+
+    screen.blit(title, (screenWidth//2 - 120, screenHeight//3))
+    screen.blit(option1, (screenWidth//2 - 120, screenHeight//2))
+    screen.blit(option2, (screenWidth//2 - 120, screenHeight//2 + 40))
+    screen.blit(option3, (screenWidth//2 - 120, screenHeight//2 + 80))
+
+    pygame.display.flip()
+
+def resetScores():
+    global playerScore, opponentScore
+    playerScore = 0
+    opponentScore = 0
