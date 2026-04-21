@@ -77,25 +77,11 @@ while running:
 
     # ---- MENU: MODE ----
     if gameState == "menu_mode":
-        title = gameFont.render("PONG", False, pf.textColor)
-        option1 = gameFont.render("1: Play vs AI", False, pf.textColor)
-        option2 = gameFont.render("2: 2 Player Mode", False, pf.textColor)
-
-        screen.blit(title, (WIDTH//2 - 40, HEIGHT//3))
-        screen.blit(option1, (WIDTH//2 - 120, HEIGHT//2))
-        screen.blit(option2, (WIDTH//2 - 140, HEIGHT//2 + 40))
+        pf.startGame(gameState, screen, gameFont, WIDTH, HEIGHT)
 
     # ---- MENU: SCORE ----
     elif gameState == "menu_score":
-        title = gameFont.render("Choose Win Condition", False, pf.textColor)
-        option1 = gameFont.render("1: First to 1", False, pf.textColor)
-        option2 = gameFont.render("2: First to 10", False, pf.textColor)
-        option3 = gameFont.render("3: First to 25", False, pf.textColor)
-
-        screen.blit(title, (WIDTH//2 - 120, HEIGHT//3))
-        screen.blit(option1, (WIDTH//2 - 120, HEIGHT//2))
-        screen.blit(option2, (WIDTH//2 - 120, HEIGHT//2 + 40))
-        screen.blit(option3, (WIDTH//2 - 120, HEIGHT//2 + 80))
+        pf.scoreScreen(gameState, screen, gameFont, WIDTH, HEIGHT)
 
     # ---- GAME OVER ----
     elif gameState == "game_over":
@@ -127,11 +113,11 @@ while running:
             scored = pf.ballMovement(ball, player, opponent, WIDTH, HEIGHT)
 
             if scored:
-                if pf.playerScore >= maxScore:
+                if pf.opponentScore >= maxScore:
                     winner = "player"
                     gameState = "game_over"
                     continue
-                elif pf.opponentScore >= maxScore:
+                elif pf.playerScore >= maxScore:
                     winner = "opponent"
                     gameState = "game_over"
                     continue

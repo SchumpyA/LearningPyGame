@@ -2,7 +2,7 @@ import pygame, sys
 import random
 
 # Colors in game
-backgroundColor = (100, 100, 125)
+backgroundColor = (150, 150, 175)
 ballColor = (200,200,200)
 lineColor = (255, 255, 255)
 textColor = (50, 50, 50)
